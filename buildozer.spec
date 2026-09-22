@@ -14,8 +14,7 @@ android.minapi = 26
 android.ndk_api = 26
 android.archs = arm64-v8a,armeabi-v7a
 android.accept_sdk_license = True
-android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
-p4a.branch = master
+p4a.branch = release-2024.01.21
 
 [buildozer]
 log_level = 2
