@@ -50,12 +50,36 @@ jobs:
           sdkmanager "build-tools;35.0.0"
           sdkmanager "build-tools;37.0.0"
 
+      - name: Create Android SDK compatibility path
+        run: |
+          echo "Android SDK: $ANDROID_SDK_ROOT"
+
+          SDKMANAGER_PATH="$(command -v sdkmanager)"
+          echo "sdkmanager found at: $SDKMANAGER_PATH"
+
+          CMDLINE_TOOLS_DIR="$(dirname "$(dirname "$SDKMANAGER_PATH")")"
+          echo "Command line tools directory: $CMDLINE_TOOLS_DIR"
+
+          if [ ! -e "$ANDROID_SDK_ROOT/tools" ]; then
+            ln -s "$CMDLINE_TOOLS_DIR" "$ANDROID_SDK_ROOT/tools"
+          fi
+
+          echo "Checking compatibility path:"
+          ls -la "$ANDROID_SDK_ROOT/tools/bin/"
+          "$ANDROID_SDK_ROOT/tools/bin/sdkmanager" --version
+
       - name: Show Android SDK
         run: |
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "Installed SDK packages:"
           sdkmanager --list_installed
+
+          echo "Build tools:"
           ls -la "$ANDROID_SDK_ROOT/build-tools"
+
+          echo "AIDL files:"
+          find "$ANDROID_SDK_ROOT/build-tools" -name aidl -type f -print
 
       - name: Prepare Buildozer Android SDK
         run: |
@@ -66,21 +90,13 @@ jobs:
           ln -s "$ANDROID_SDK_ROOT" \
             "$HOME/.buildozer/android/platform/android-sdk"
 
-          echo "Buildozer SDK link:"
+          echo "Buildozer SDK:"
           ls -la "$HOME/.buildozer/android/platform/"
-
-          echo "Checking AIDL:"
-          find "$ANDROID_SDK_ROOT/build-tools" -name aidl -type f -print
 
       - name: Install Buildozer
         run: |
           python3 -m pip install --user --upgrade pip
           python3 -m pip install --user buildozer cython==0.29.36
-
-      - name: Configure Buildozer
-        run: |
-          echo "Using Android SDK:"
-          readlink -f "$HOME/.buildozer/android/platform/android-sdk"
 
       - name: Build APK
         env:
