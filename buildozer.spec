@@ -5,7 +5,7 @@ package.domain = com.deltadualtrader
 source.dir = .
 source.include_exts = py,kv,png,jpg,json
 version = 1.0.0
-requirements = python3==3.12.10,hostpython3==3.12.10,kivy==2.3.1,requests,websocket-client
+requirements = python3==3.12.10,hostpython3==3.12.10,kivy==2.3.1,requests,websocket-client,liblzma
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
