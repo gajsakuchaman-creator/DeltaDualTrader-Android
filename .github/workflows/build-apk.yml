@@ -1,19 +1,38 @@
 name: Build Android APK
+
 on:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Install system packages
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip git zip unzip openjdk-17-jdk
+
       - name: Install Buildozer
-        run: pip3 install --user buildozer cython==0.29.36
+        run: |
+          pip3 install --user buildozer cython==0.29.36
+
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER=$(find "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          yes | "$SDKMANAGER" --licenses || true
+
+      - name: Install Android Build Tools
+        run: |
+          SDKMANAGER=$(find "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          "$SDKMANAGER" "build-tools;37.0.0"
+
       - name: Build APK
-        run: ~/.local/bin/buildozer -v android debug
+        run: |
+          ~/.local/bin/buildozer -v android debug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
