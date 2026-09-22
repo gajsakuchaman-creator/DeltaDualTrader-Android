@@ -20,7 +20,19 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip git zip unzip wget
+          sudo apt-get install -y \
+            python3-pip \
+            python3-venv \
+            git \
+            zip \
+            unzip \
+            wget \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
@@ -29,23 +41,62 @@ jobs:
 
       - name: Accept Android SDK licenses
         run: |
-          yes | sdkmanager --licenses
+          yes | sdkmanager --licenses || true
 
       - name: Install Android SDK packages
         run: |
+          sdkmanager "platform-tools"
           sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.0"
-          sdkmanager "platform-tools"
+          sdkmanager "build-tools;37.0.0"
+
+      - name: Show Android SDK
+        run: |
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --list_installed
+          ls -la "$ANDROID_SDK_ROOT/build-tools"
+
+      - name: Prepare Buildozer Android SDK
+        run: |
+          mkdir -p "$HOME/.buildozer/android/platform"
+
+          rm -rf "$HOME/.buildozer/android/platform/android-sdk"
+
+          ln -s "$ANDROID_SDK_ROOT" \
+            "$HOME/.buildozer/android/platform/android-sdk"
+
+          echo "Buildozer SDK link:"
+          ls -la "$HOME/.buildozer/android/platform/"
+
+          echo "Checking AIDL:"
+          find "$ANDROID_SDK_ROOT/build-tools" -name aidl -type f -print
 
       - name: Install Buildozer
         run: |
-          pip3 install --user buildozer cython==0.29.36
+          python3 -m pip install --user --upgrade pip
+          python3 -m pip install --user buildozer cython==0.29.36
+
+      - name: Configure Buildozer
+        run: |
+          echo "Using Android SDK:"
+          readlink -f "$HOME/.buildozer/android/platform/android-sdk"
 
       - name: Build APK
+        env:
+          ANDROIDSDK: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           ~/.local/bin/buildozer -v android debug
 
+      - name: List APK files
+        if: success()
+        run: |
+          echo "APK files:"
+          find bin -maxdepth 1 -type f -name "*.apk" -print
+
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: DeltaDualTrader-debug-apk
